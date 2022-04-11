@@ -1,0 +1,127 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:html="jelly:html" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+    <j:set var="editorId" value="${descriptor.createEditorId()}" />
+    <st:bind var="backend" value="${descriptor}"/>
+
+    <f:entry title="${%Url}" field="url">
+        <f:textbox id="flinko-url-${editorId}" />
+    </f:entry>
+
+    <f:entry title="Credentials"/>
+
+    <f:entry title="${%UserName}" field="userName">
+        <f:textbox id="flinko-userName-${editorId}" />
+    </f:entry>
+
+    <f:entry title="${%Password}" field="password">
+        <f:password id="flinko-password-${editorId}"  />
+    </f:entry>
+
+    <f:validateButton title="Test Connection" progress="Checking..."
+                      method="testConnection" with="url,userName,password"/>
+
+    <f:entry field="project" title="${%Project}" >
+        <f:select id="flinko-project-${editorId}" onfocus="getProjects(this.id)"
+                  onchange="getSuites(this.id, 'flinko-userName-${editorId}', 'flinko-password-${editorId}')" />
+    </f:entry>
+
+    <f:entry field="suite" title="${%Suite}"  >
+        <f:select id="flinko-suite-${editorId}" onfocus="fetchSuites(this.id)"
+                  onchange="setSuiteId(this.id)"/>
+    </f:entry>
+
+    <script>
+
+        var suiteMap = {};
+        var projectMap = {};
+
+        function setSuiteId(id) {
+            var suiteId = document.getElementById(id).value
+            console.log("inside set suite ui ", suiteId);
+            console.log("suite map -----> ", suiteMap[suiteId], suiteMap);
+            backend.setSuiteId(suiteMap[suiteId], function() {
+                    console.log("====setting suite id: ", suiteMap[suiteId]);
+                    backend.getSuiteId(function(id) {
+                        console.log("selected suite id", id);
+                    });
+                });
+        }
+        function getProjects(id) {
+            console.log("offer id ======> " + id );
+            backend.fetchProjects(function(obj) {
+                document.getElementById(id).innerHTML=null;
+                var sel = document.getElementById(id);
+                if(obj != null) {
+                    if(obj.responseJSON != null) {
+                        obj.responseJSON.forEach(function(project, index) {
+                            if(index == 0) {
+                                var opt = document.createElement('option');
+                                opt.innerHTML = "-none-";
+                                opt.value = "-none-";
+                                sel.appendChild(opt);
+                            }
+                            projectMap[project.name] = project.id;
+                            var opt = document.createElement('option');
+                            opt.innerHTML = project.name;
+                            opt.value = project.name;
+                            sel.appendChild(opt);
+                        });
+                    }
+                }
+            });
+        }
+
+        function getSuites(selectId, userId, passwordId) {
+            console.log("suite id ======> " + selectId + userId + passwordId);
+            var selectedProjectElement = document.getElementById(selectId);
+            var strProjectValue = selectedProjectElement.value;
+            var strProjectText = selectedProjectElement.options[selectedProjectElement.selectedIndex].text;
+            var strProjectId = projectMap[strProjectText];
+            var flinkoUserId = document.getElementById(userId).value;
+            var flinkoPassword = document.getElementById(passwordId).value;
+            console.log("selected project value is " + strProjectValue + ", Text is " + strProjectText);
+            backend.getSuites(flinkoUserId,flinkoPassword,strProjectId,function(obj) {
+                console.log("fetched all suites", obj);
+                console.log("project map -----> ", projectMap[strProjectValue], projectMap);
+                backend.setProjectId(projectMap[strProjectValue], function() {
+                    console.log("====setting project id: ", projectMap[strProjectValue]);
+                    backend.getProjectId(function(id) {
+                        console.log("selected project id", id);
+                    });
+                });
+            });
+        }
+
+        function fetchSuites(id) {
+            console.log("suite id ======> " + id);
+            backend.fetchSuites(function(obj) {
+                console.log("object ======> ");
+                console.log(obj );
+                document.getElementById(id).innerHTML=null;
+                var sel = document.getElementById(id);
+                if(obj != null) {
+                    if(obj.responseJSON != null) {
+                        obj.responseJSON.forEach(function(project, index) {
+                            console.log("index ======> " + index);
+                            if(index == 0) {
+                                var opt = document.createElement('option');
+                                opt.innerHTML = "-none-";
+                                opt.value = "-none-";
+                                sel.appendChild(opt);
+                            }
+                            suiteMap[project.name] = project.id;
+                            var opt = document.createElement('option');
+                            opt.innerHTML = project.name;
+                            opt.value = project.name;
+                            sel.appendChild(opt);
+                        });
+                    }
+                }
+            });
+        }
+
+
+    </script>
+</j:jelly>
+

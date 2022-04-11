@@ -1,0 +1,8 @@
+<?jelly escape-by-default='false'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:local="local">
+        <!-- In index the project action is referenced by the jelly ${it} -->
+        Flinko statistics
+        Pass: ${it.localPass}
+        Failed: ${it.localFail}
+</j:jelly>
